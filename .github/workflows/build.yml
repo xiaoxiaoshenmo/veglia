@@ -9,11 +9,20 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
-          export ANDROID_HOME="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          cd android && chmod +x build.sh && ./build.sh
+      - name: Build Veglia APK
+        run: |
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          SM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SM" ] || SM=$(find "$ANDROID_HOME" -name sdkmanager -type f 2>/dev/null | head -1)
+          echo "sdkmanager=$SM"
+          [ -n "$SM" ] && yes | "$SM" --licenses >/dev/null 2>&1 || true
+          [ -n "$SM" ] && yes | "$SM" "platforms;android-34" "build-tools;34.0.0" >/dev/null 2>&1 || true
+          ls "$ANDROID_HOME/platforms" 2>/dev/null || true
+          ls "$ANDROID_HOME/build-tools" 2>/dev/null || true
+          cd android
+          chmod +x build.sh
+          ./build.sh
       - uses: actions/upload-artifact@v4
         with:
           name: Veglia-apk
